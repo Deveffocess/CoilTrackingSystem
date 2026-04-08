@@ -1,0 +1,125 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<section class="hero-panel mb-4">
+    <div>
+        <p class="eyebrow mb-2">Coil Tracing System</p>
+        <h1 class="h2 mb-2">Track inward, storage, movement, and dispatch from one dashboard.</h1>
+        <p class="mb-0 text-secondary">Track coils down to warehouse, bay, sub-bay, and row with the current demo hierarchy ready for MySQL integration.</p>
+    </div>
+    <div class="hero-actions">
+        <a class="btn btn-primary" asp-controller="Transactions" asp-action="Index">Open Transactions</a>
+        <a class="btn btn-outline-light" asp-controller="Reports" asp-action="Index">View Reports</a>
+    </div>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="metric-card">
+            <span>Total Coils</span>
+            <strong>@Model.TotalCoils</strong>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="metric-card">
+            <span>Stored</span>
+            <strong>@Model.StoredCoils</strong>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="metric-card">
+            <span>Inspection Pending</span>
+            <strong>@Model.InspectionPending</strong>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="metric-card">
+            <span>Dispatch Ready</span>
+            <strong>@Model.DispatchReady</strong>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="app-card h-100">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Recent Coils</h2>
+                    <p class="text-secondary mb-0">Latest inward and current storage status.</p>
+                </div>
+                <input type="search" class="form-control form-control-sm table-search" data-target="#recentCoilsTable" placeholder="Search coil..." />
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle" id="recentCoilsTable">
+                    <thead>
+                        <tr>
+                            <th>Coil No</th>
+                            <th>Heat No</th>
+                            <th>Grade</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var coil in Model.RecentCoils)
+                    {
+                        <tr>
+                            <td>@coil.CoilNumber</td>
+                            <td>@coil.HeatNumber</td>
+                            <td>@coil.Grade</td>
+                            <td>@coil.CurrentLocationCode</td>
+                            <td><span class="badge status-badge">@coil.Status</span></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="app-card mb-4">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Location Utilization</h2>
+                    <p class="text-secondary mb-0">Quick occupancy view for row-level storage across the warehouse hierarchy.</p>
+                </div>
+            </div>
+            @foreach (var location in Model.Locations)
+            {
+                var utilization = location.Capacity == 0 ? 0 : (int)Math.Round((double)location.Occupied / location.Capacity * 100);
+                <div class="location-row">
+                    <div>
+                        <strong>@location.Code</strong>
+                        <div class="text-secondary small">@location.HierarchyPath</div>
+                    </div>
+                    <div class="w-50">
+                        <div class="progress" role="progressbar" aria-valuenow="@utilization" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" style="width:@utilization%">@utilization%</div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="app-card">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Recent Movement</h2>
+                    <p class="text-secondary mb-0">Latest traceability events.</p>
+                </div>
+            </div>
+            <div class="timeline-list">
+                @foreach (var movement in Model.RecentMovements)
+                {
+                    <div class="timeline-item">
+                        <strong>@movement.CoilNumber</strong>
+                        <span>@movement.Activity</span>
+                        <small>@movement.FromLocation to @movement.ToLocation</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,662 @@
+@model MastersViewModel
+@{
+    ViewData["Title"] = "Masters";
+}
+
+<section class="master-hero mb-4">
+    <div>
+        <p class="eyebrow mb-2">Setup</p>
+        <h1 class="h2 mb-2">Warehouse Master Control Center</h1>
+        <p class="mb-0 text-secondary">Create the full storage hierarchy in one place, from warehouse down to the final row where each coil is stored.</p>
+    </div>
+    <div class="master-hero-actions">
+        <button class="btn btn-light" type="button" data-bs-toggle="modal" data-bs-target="#warehouseModal">New Warehouse</button>
+        <button class="btn btn-outline-light" type="button" data-bs-toggle="modal" data-bs-target="#rowModal">New Row</button>
+    </div>
+</section>
+
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-@TempData["StatusType"] mb-4" role="alert">
+        @statusMessage
+    </div>
+}
+
+<div class="master-guide mb-4">
+    <span class="master-guide-item">1. Warehouse</span>
+    <span class="master-guide-arrow">→</span>
+    <span class="master-guide-item">2. Bay</span>
+    <span class="master-guide-arrow">→</span>
+    <span class="master-guide-item">3. SubBay</span>
+    <span class="master-guide-arrow">→</span>
+    <span class="master-guide-item">4. Row</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-12">
+        <div class="row g-4 mb-1">
+            <div class="col-md-6 col-xl-3">
+                <div class="metric-card">
+                    <span>Warehouses</span>
+                    <strong>@Model.Warehouses.Count</strong>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="metric-card">
+                    <span>Bays</span>
+                    <strong>@Model.Bays.Count</strong>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="metric-card">
+                    <span>SubBays</span>
+                    <strong>@Model.SubBays.Count</strong>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <div class="metric-card">
+                    <span>Rows</span>
+                    <strong>@Model.Locations.Count</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="app-card master-card h-100">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Warehouse Master</h2>
+                    <p class="text-secondary mb-0">Top-level physical storage definitions.</p>
+                </div>
+                <div class="master-card-tools">
+                    <input type="search" class="form-control form-control-sm table-search master-search" data-target="#warehouseTable" placeholder="Search warehouse..." />
+                    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#warehouseModal">Add Warehouse</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle master-table" id="warehouseTable">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var warehouse in Model.Warehouses)
+                    {
+                        <tr>
+                            <td>@warehouse.Code</td>
+                            <td>@warehouse.Name</td>
+                            <td>@warehouse.Description</td>
+                            <td>
+                                <span class="badge @(warehouse.IsActive ? "text-bg-success" : "text-bg-secondary")">
+                                    @(warehouse.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td class="text-end action-cell">
+                                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#warehouse-edit-@warehouse.Id">Edit</button>
+                                <form asp-action="DeleteWarehouse" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@warehouse.Id" />
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr class="collapse master-edit-row" id="warehouse-edit-@warehouse.Id">
+                            <td colspan="5">
+                                <form asp-action="UpdateWarehouse" method="post" class="row g-3 master-inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@warehouse.Id" />
+                                    <div class="col-md-3">
+                                        <label class="form-label">Code</label>
+                                        <input class="form-control" name="Code" value="@warehouse.Code" required />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Name</label>
+                                        <input class="form-control" name="Name" value="@warehouse.Name" required />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Description</label>
+                                        <input class="form-control" name="Description" value="@warehouse.Description" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label d-block">Status</label>
+                                        <div class="form-check mt-2">
+                                            <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked="@warehouse.IsActive" />
+                                            <label class="form-check-label">Active</label>
+                                        </div>
+                                        <input type="hidden" name="IsActive" value="false" />
+                                    </div>
+                                    <div class="col-12 text-end">
+                                        <button class="btn btn-primary btn-sm" type="submit">Save Warehouse</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="app-card master-card h-100">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Bay Master</h2>
+                    <p class="text-secondary mb-0">Area-level grouping inside each warehouse.</p>
+                </div>
+                <div class="master-card-tools">
+                    <input type="search" class="form-control form-control-sm table-search master-search" data-target="#bayTable" placeholder="Search bay..." />
+                    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#bayModal">Add Bay</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle master-table" id="bayTable">
+                    <thead>
+                        <tr>
+                            <th>Warehouse</th>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var bay in Model.Bays)
+                    {
+                        var warehouseName = Model.Warehouses.FirstOrDefault(x => x.Code == bay.WarehouseCode)?.Name ?? bay.WarehouseCode;
+                        <tr>
+                            <td>@warehouseName</td>
+                            <td>@bay.Code</td>
+                            <td>@bay.Name</td>
+                            <td>
+                                <span class="badge @(bay.IsActive ? "text-bg-success" : "text-bg-secondary")">
+                                    @(bay.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td class="text-end action-cell">
+                                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#bay-edit-@bay.Id">Edit</button>
+                                <form asp-action="DeleteBay" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@bay.Id" />
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr class="collapse master-edit-row" id="bay-edit-@bay.Id">
+                            <td colspan="5">
+                                <form asp-action="UpdateBay" method="post" class="row g-3 master-inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@bay.Id" />
+                                    <div class="col-md-4">
+                                        <label class="form-label">Warehouse</label>
+                                        <select class="form-select" name="WarehouseCode" required>
+                                            @foreach (var warehouse in Model.Warehouses)
+                                            {
+                                                <option value="@warehouse.Code" selected="@(warehouse.Code == bay.WarehouseCode)">@warehouse.Name (@warehouse.Code)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Code</label>
+                                        <input class="form-control" name="Code" value="@bay.Code" required />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Name</label>
+                                        <input class="form-control" name="Name" value="@bay.Name" required />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label d-block">Status</label>
+                                        <div class="form-check mt-2">
+                                            <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked="@bay.IsActive" />
+                                            <label class="form-check-label">Active</label>
+                                        </div>
+                                        <input type="hidden" name="IsActive" value="false" />
+                                    </div>
+                                    <div class="col-12 text-end">
+                                        <button class="btn btn-primary btn-sm" type="submit">Save Bay</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="app-card master-card h-100">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">SubBay Master</h2>
+                    <p class="text-secondary mb-0">Sub-area definitions under each bay.</p>
+                </div>
+                <div class="master-card-tools">
+                    <input type="search" class="form-control form-control-sm table-search master-search" data-target="#subBayTable" placeholder="Search sub-bay..." />
+                    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#subBayModal">Add SubBay</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle master-table" id="subBayTable">
+                    <thead>
+                        <tr>
+                            <th>Warehouse</th>
+                            <th>Bay</th>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var subBay in Model.SubBays)
+                    {
+                        var warehouseName = Model.Warehouses.FirstOrDefault(x => x.Code == subBay.WarehouseCode)?.Name ?? subBay.WarehouseCode;
+                        var bayName = Model.Bays.FirstOrDefault(x => x.WarehouseCode == subBay.WarehouseCode && x.Code == subBay.BayCode)?.Name ?? subBay.BayCode;
+                        <tr>
+                            <td>@warehouseName</td>
+                            <td>@bayName</td>
+                            <td>@subBay.Code</td>
+                            <td>@subBay.Name</td>
+                            <td class="text-end action-cell">
+                                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#subbay-edit-@subBay.Id">Edit</button>
+                                <form asp-action="DeleteSubBay" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@subBay.Id" />
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr class="collapse master-edit-row" id="subbay-edit-@subBay.Id">
+                            <td colspan="5">
+                                <form asp-action="UpdateSubBay" method="post" class="row g-3 master-inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@subBay.Id" />
+                                    <div class="col-md-4">
+                                        <label class="form-label">Warehouse</label>
+                                        <select class="form-select" name="WarehouseCode" required>
+                                            @foreach (var warehouse in Model.Warehouses)
+                                            {
+                                                <option value="@warehouse.Code" selected="@(warehouse.Code == subBay.WarehouseCode)">@warehouse.Name (@warehouse.Code)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Bay</label>
+                                        <select class="form-select" name="BayCode" required>
+                                            @foreach (var bayOption in Model.Bays)
+                                            {
+                                                <option value="@bayOption.Code" selected="@(bayOption.Code == subBay.BayCode && bayOption.WarehouseCode == subBay.WarehouseCode)">
+                                                    @bayOption.Name (@bayOption.Code) - @bayOption.WarehouseCode
+                                                </option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Code</label>
+                                        <input class="form-control" name="Code" value="@subBay.Code" required />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Name</label>
+                                        <input class="form-control" name="Name" value="@subBay.Name" required />
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked="@subBay.IsActive" />
+                                            <label class="form-check-label">Active</label>
+                                        </div>
+                                        <input type="hidden" name="IsActive" value="false" />
+                                    </div>
+                                    <div class="col-12 text-end">
+                                        <button class="btn btn-primary btn-sm" type="submit">Save SubBay</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="app-card master-card">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Row Master</h2>
+                    <p class="text-secondary mb-0">Lowest storage location where a coil is finally placed.</p>
+                </div>
+                <div class="master-card-tools">
+                    <input type="search" class="form-control form-control-sm table-search master-search" data-target="#rowTable" placeholder="Search row or path..." />
+                    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#rowModal">Add Row</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle master-table" id="rowTable">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Path</th>
+                            <th>Capacity</th>
+                            <th>Occupied</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var location in Model.Locations)
+                    {
+                        var selectedSubBay = Model.SubBays.FirstOrDefault(x =>
+                            x.Name == location.SubBay &&
+                            (Model.Bays.FirstOrDefault(b => b.Code == x.BayCode && b.WarehouseCode == x.WarehouseCode)?.Name ?? string.Empty) == location.Bay &&
+                            (Model.Warehouses.FirstOrDefault(w => w.Code == x.WarehouseCode)?.Name ?? string.Empty) == location.Warehouse);
+                        <tr>
+                            <td>@location.Code</td>
+                            <td><span class="hierarchy-pill">@location.HierarchyPath</span></td>
+                            <td>@location.Capacity</td>
+                            <td>@location.Occupied</td>
+                            <td>
+                                <span class="badge @(location.IsActive ? "text-bg-success" : "text-bg-secondary")">
+                                    @(location.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td class="text-end action-cell">
+                                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#row-edit-@location.Id">Edit</button>
+                                <form asp-action="DeleteRow" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@location.Id" />
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr class="collapse master-edit-row" id="row-edit-@location.Id">
+                            <td colspan="6">
+                                <form asp-action="UpdateRow" method="post" class="row g-3 master-inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@location.Id" />
+                                    <div class="col-md-3">
+                                        <label class="form-label">Code</label>
+                                        <input class="form-control" name="Code" value="@location.Code" required />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Name</label>
+                                        <input class="form-control" name="Name" value="@location.Name" required />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">SubBay</label>
+                                        <select class="form-select" name="SubBayId" required>
+                                            <option value="">Select</option>
+                                            @foreach (var subBayOption in Model.SubBays)
+                                            {
+                                                var bayOption = Model.Bays.FirstOrDefault(x => x.Code == subBayOption.BayCode && x.WarehouseCode == subBayOption.WarehouseCode);
+                                                var warehouseOption = Model.Warehouses.FirstOrDefault(x => x.Code == subBayOption.WarehouseCode);
+                                                <option value="@subBayOption.Id" selected="@(selectedSubBay?.Id == subBayOption.Id)">
+                                                    @warehouseOption?.Name / @bayOption?.Name / @subBayOption.Name
+                                                </option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Row Label</label>
+                                        <input class="form-control" name="Row" value="@location.Row" required />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Capacity</label>
+                                        <input class="form-control" type="number" min="1" name="Capacity" value="@location.Capacity" required />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Occupied</label>
+                                        <input class="form-control" type="number" min="0" name="Occupied" value="@location.Occupied" required />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label d-block">Status</label>
+                                        <div class="form-check mt-2">
+                                            <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked="@location.IsActive" />
+                                            <label class="form-check-label">Active</label>
+                                        </div>
+                                        <input type="hidden" name="IsActive" value="false" />
+                                    </div>
+                                    <div class="col-12 text-end">
+                                        <button class="btn btn-primary btn-sm" type="submit">Save Row</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="app-card mb-4">
+            <h2 class="h5 mb-3">Material Grades</h2>
+            <div class="chip-list">
+                @foreach (var grade in Model.Grades)
+                {
+                    <span class="chip">@grade</span>
+                }
+            </div>
+        </div>
+        <div class="app-card">
+            <h2 class="h5 mb-3">Approved Suppliers</h2>
+            <ul class="list-group list-group-flush">
+                @foreach (var supplier in Model.Suppliers)
+                {
+                    <li class="list-group-item px-0">@supplier</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="warehouseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="CreateWarehouse" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Add Warehouse</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Code</label>
+                            <input class="form-control" name="Code" required />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" name="Name" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <input class="form-control" name="Description" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked />
+                                <label class="form-check-label">Active</label>
+                            </div>
+                            <input type="hidden" name="IsActive" value="false" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" type="submit">Save Warehouse</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="CreateBay" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Add Bay</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Warehouse</label>
+                            <select class="form-select" name="WarehouseCode" required>
+                                <option value="">Select</option>
+                                @foreach (var warehouse in Model.Warehouses)
+                                {
+                                    <option value="@warehouse.Code">@warehouse.Name (@warehouse.Code)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Code</label>
+                            <input class="form-control" name="Code" required />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" name="Name" required />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked />
+                                <label class="form-check-label">Active</label>
+                            </div>
+                            <input type="hidden" name="IsActive" value="false" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" type="submit">Save Bay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="subBayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="CreateSubBay" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Add SubBay</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Warehouse</label>
+                            <select class="form-select" name="WarehouseCode" required>
+                                <option value="">Select</option>
+                                @foreach (var warehouse in Model.Warehouses)
+                                {
+                                    <option value="@warehouse.Code">@warehouse.Name (@warehouse.Code)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Bay</label>
+                            <select class="form-select" name="BayCode" required>
+                                <option value="">Select</option>
+                                @foreach (var bay in Model.Bays)
+                                {
+                                    var warehouseName = Model.Warehouses.FirstOrDefault(x => x.Code == bay.WarehouseCode)?.Name ?? bay.WarehouseCode;
+                                    <option value="@bay.Code">@warehouseName / @bay.Name (@bay.Code)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Code</label>
+                            <input class="form-control" name="Code" required />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" name="Name" required />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked />
+                                <label class="form-check-label">Active</label>
+                            </div>
+                            <input type="hidden" name="IsActive" value="false" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" type="submit">Save SubBay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rowModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="CreateRow" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Add Row</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Code</label>
+                            <input class="form-control" name="Code" required />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" name="Name" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">SubBay</label>
+                            <select class="form-select" name="SubBayId" required>
+                                <option value="">Select</option>
+                                @foreach (var subBay in Model.SubBays)
+                                {
+                                    var bay = Model.Bays.FirstOrDefault(x => x.Code == subBay.BayCode && x.WarehouseCode == subBay.WarehouseCode);
+                                    var warehouse = Model.Warehouses.FirstOrDefault(x => x.Code == subBay.WarehouseCode);
+                                    <option value="@subBay.Id">@warehouse?.Name / @bay?.Name / @subBay.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Row Label</label>
+                            <input class="form-control" name="Row" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Capacity</label>
+                            <input class="form-control" type="number" min="1" name="Capacity" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Occupied</label>
+                            <input class="form-control" type="number" min="0" name="Occupied" value="0" required />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked />
+                                <label class="form-check-label">Active</label>
+                            </div>
+                            <input type="hidden" name="IsActive" value="false" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" type="submit">Save Row</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,70 @@
+@model ReportsViewModel
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="eyebrow mb-1">Analysis</p>
+        <h1 class="h3 mb-1">Reports and Traceability</h1>
+        <p class="text-secondary mb-0">Ready for export, stock summary, movement history, and warehouse hierarchy-wise status reporting.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="app-card h-100">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Stock Summary</h2>
+                    <p class="text-secondary mb-0">Live inventory snapshot by coil.</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Coil No</th>
+                            <th>Heat No</th>
+                            <th>Grade</th>
+                            <th>Weight</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var coil in Model.Coils)
+                    {
+                        <tr>
+                            <td>@coil.CoilNumber</td>
+                            <td>@coil.HeatNumber</td>
+                            <td>@coil.Grade</td>
+                            <td>@coil.Weight</td>
+                            <td>@coil.CurrentLocationCode</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="app-card h-100">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Movement Log</h2>
+                    <p class="text-secondary mb-0">Traceable chain of activity for audit use.</p>
+                </div>
+            </div>
+            <div class="timeline-list">
+                @foreach (var movement in Model.Movements)
+                {
+                    <div class="timeline-item">
+                        <strong>@movement.CoilNumber</strong>
+                        <span>@movement.Activity (@movement.ReferenceNumber)</span>
+                        <small>@movement.MovementDate.ToString("dd-MMM-yyyy HH:mm") by @movement.UpdatedBy</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

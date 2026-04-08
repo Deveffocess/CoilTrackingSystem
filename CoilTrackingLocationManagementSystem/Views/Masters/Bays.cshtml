@@ -1,0 +1,181 @@
+@model MastersViewModel
+@{
+    ViewData["Title"] = "Bay Master";
+}
+
+<section class="master-hero mb-4">
+    <div>
+        <p class="eyebrow mb-2">Master</p>
+        <h1 class="h2 mb-2">Bay Master</h1>
+        <p class="mb-0 text-secondary">Manage warehouse-wise bays on a separate page.</p>
+    </div>
+    <div class="master-hero-actions">
+        <a class="btn btn-outline-light" asp-action="Index">All Masters</a>
+        <button class="btn btn-light" type="button" data-bs-toggle="modal" data-bs-target="#bayModal">Add Bay</button>
+    </div>
+</section>
+
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-@TempData["StatusType"] mb-4" role="alert">@statusMessage</div>
+}
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="app-card master-card">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Bay List</h2>
+                    <p class="text-secondary mb-0">Focused area for bay maintenance.</p>
+                </div>
+                <input type="search" class="form-control form-control-sm table-search master-search" data-target="#bayTable" placeholder="Search bay..." />
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle master-table" id="bayTable" data-page-size="5">
+                    <thead>
+                        <tr>
+                            <th>Warehouse</th>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Date</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var bay in Model.Bays)
+                    {
+                        var warehouseName = Model.Warehouses.FirstOrDefault(x => x.Code == bay.WarehouseCode)?.Name ?? bay.WarehouseCode;
+                        <tr>
+                            <td>@warehouseName</td>
+                            <td>@bay.Code</td>
+                            <td>@bay.Name</td>
+                            <td>@bay.CreatedDate.ToString("dd-MMM-yyyy HH:mm")</td>
+                            <td class="text-end action-cell">
+                                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#bayEditModal-@bay.Id">Edit</button>
+                                <form asp-action="DeleteBay" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@bay.Id" />
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-pager" data-target="#bayTable"></div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="metric-card mb-4">
+            <span>Total Bays</span>
+            <strong>@Model.Bays.Count</strong>
+        </div>
+        <div class="app-card">
+            <h2 class="h5 mb-3">Related Masters</h2>
+            <div class="chip-list">
+                <a class="chip text-decoration-none" asp-action="Warehouses">Warehouse Master</a>
+                <a class="chip text-decoration-none" asp-action="SubBays">SubBay Master</a>
+                <a class="chip text-decoration-none" asp-action="Rows">Row Master</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@foreach (var bay in Model.Bays)
+{
+    <div class="modal fade" id="bayEditModal-@bay.Id" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="UpdateBay" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@bay.Id" />
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5">Edit Bay</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Warehouse</label>
+                                <select class="form-select" name="WarehouseCode" required>
+                                    @foreach (var warehouse in Model.Warehouses)
+                                    {
+                                        <option value="@warehouse.Code" selected="@(warehouse.Code == bay.WarehouseCode)">@warehouse.Name (@warehouse.Code)</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Code</label>
+                                <input class="form-control" name="Code" value="@bay.Code" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Name</label>
+                                <input class="form-control" name="Name" value="@bay.Name" required />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label d-block">Status</label>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked="@bay.IsActive" />
+                                    <label class="form-check-label">Active</label>
+                                </div>
+                                <input type="hidden" name="IsActive" value="false" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                        <button class="btn btn-primary" type="submit">Update Bay</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="modal fade" id="bayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="CreateBay" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Add Bay</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Warehouse</label>
+                            <select class="form-select" name="WarehouseCode" required>
+                                <option value="">Select</option>
+                                @foreach (var warehouse in Model.Warehouses)
+                                {
+                                    <option value="@warehouse.Code">@warehouse.Name (@warehouse.Code)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Code</label>
+                            <input class="form-control" name="Code" required />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" name="Name" required />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked />
+                                <label class="form-check-label">Active</label>
+                            </div>
+                            <input type="hidden" name="IsActive" value="false" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary" type="submit">Save Bay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

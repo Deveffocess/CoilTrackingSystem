@@ -1,0 +1,163 @@
+@model TransactionsViewModel
+@{
+    ViewData["Title"] = "Transactions";
+}
+
+<div class="page-heading">
+    <div>
+        <p class="eyebrow mb-1">Operations</p>
+        <h1 class="h3 mb-1">Coil Transactions</h1>
+        <p class="text-secondary mb-0">Capture inward receipt, assign location, and monitor each material movement.</p>
+    </div>
+</div>
+
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-@TempData["StatusType"] mb-4" role="alert">@statusMessage</div>
+}
+
+<div class="row g-4">
+    <div class="col-xl-5">
+        <div class="app-card h-100">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">New Inward Entry</h2>
+                    <p class="text-secondary mb-0">Capture inward receipt and assign the exact warehouse, bay, sub-bay, and row.</p>
+                </div>
+            </div>
+            <form asp-action="CreateInwardEntry" method="post" id="inwardForm" class="row g-3">
+                @Html.AntiForgeryToken()
+                <div class="col-md-6">
+                    <label class="form-label">Coil Number</label>
+                    <input class="form-control" name="CoilNumber" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Heat Number</label>
+                    <input class="form-control" name="HeatNumber" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Grade</label>
+                    <select class="form-select" name="Grade" required>
+                        <option value="">Select</option>
+                        @foreach (var grade in Model.Grades)
+                        {
+                            <option value="@grade">@grade</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Thickness</label>
+                    <input class="form-control" type="number" step="0.01" min="0.01" name="Thickness" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Width</label>
+                    <input class="form-control" type="number" step="0.01" min="0.01" name="Width" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Weight</label>
+                    <input class="form-control" type="number" step="0.01" min="0.01" name="Weight" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Received Date</label>
+                    <input class="form-control" type="date" name="ReceivedDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">GRN Number</label>
+                    <input class="form-control" name="GrnNumber" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Received By</label>
+                    <input class="form-control" name="ReceivedBy" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Location</label>
+                    <select class="form-select" name="LocationId" required>
+                        <option value="">Select</option>
+                        @foreach (var location in Model.Locations)
+                        {
+                            <option value="@location.Id">@location.Code - @location.HierarchyPath</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Remarks</label>
+                    <textarea class="form-control" rows="3" name="Remarks"></textarea>
+                </div>
+                <div class="col-12">
+                    <button class="btn btn-primary" type="submit">Save Inward Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-xl-7">
+        <div class="app-card mb-4">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Current Coil Register</h2>
+                    <p class="text-secondary mb-0">Use the search box to filter by coil number, grade, or location.</p>
+                </div>
+                <input type="search" class="form-control form-control-sm table-search" data-target="#coilRegisterTable" placeholder="Search register..." />
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle" id="coilRegisterTable">
+                    <thead>
+                        <tr>
+                            <th>Coil No</th>
+                            <th>Grade</th>
+                            <th>Weight</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var coil in Model.InwardCoils)
+                    {
+                        <tr>
+                            <td>@coil.CoilNumber</td>
+                            <td>@coil.Grade</td>
+                            <td>@coil.Weight</td>
+                            <td>@coil.CurrentLocationCode</td>
+                            <td>@coil.Status</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="app-card">
+            <div class="section-heading">
+                <div>
+                    <h2 class="h5 mb-1">Movement History</h2>
+                    <p class="text-secondary mb-0">Trace each coil from receipt to dispatch.</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Coil</th>
+                            <th>Activity</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Ref No</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var movement in Model.Movements)
+                    {
+                        <tr>
+                            <td>@movement.MovementDate.ToString("dd-MMM-yyyy HH:mm")</td>
+                            <td>@movement.CoilNumber</td>
+                            <td>@movement.Activity</td>
+                            <td>@movement.FromLocation</td>
+                            <td>@movement.ToLocation</td>
+                            <td>@movement.ReferenceNumber</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
